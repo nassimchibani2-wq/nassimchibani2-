@@ -1,1 +1,1291 @@
+<!DOCTYPE html>
+<!--
+  ═══════════════════════════════════════════════════════════
+  📄 index.html — كاشف الحقيقة | News Verify v3
+  الجديد:
+    • خانة بحث عالمية بدل شريط الدول
+    • قائمة لغات: عربي / English / Français
+    • RTL ↔ LTR تلقائي
+  ═══════════════════════════════════════════════════════════
+-->
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f1923" />
+  <title>كاشف الحقيقة | News Verify</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;600;700;900&family=Readex+Pro:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
 
+  <!-- ══════════ HEADER ══════════ -->
+  <header class="header">
+    <div class="header-inner">
+
+      <div class="logo">
+        <span class="logo-icon">🔍</span>
+        <div class="logo-text">
+          <h1 data-i18n="appName">كاشف الحقيقة</h1>
+          <span>News Verify</span>
+        </div>
+      </div>
+
+      <div class="header-tools">
+        <!-- زر اللغة -->
+        <div class="lang-wrap">
+          <button class="lang-toggle" id="langToggle" aria-haspopup="true" aria-expanded="false">
+            <span id="currentLangFlag">🇩🇿</span>
+            <span id="currentLangName">العربية</span>
+            <span class="chevron">▾</span>
+          </button>
+          <div class="lang-dropdown hidden" id="langDropdown" role="menu">
+            <button class="lang-option active" data-lang="ar" role="menuitem">🇩🇿 العربية</button>
+            <button class="lang-option"        data-lang="en" role="menuitem">🇬🇧 English</button>
+            <button class="lang-option"        data-lang="fr" role="menuitem">🇫🇷 Français</button>
+          </div>
+        </div>
+
+        <!-- شارة الحالة -->
+        <div class="status-badge">
+          <span class="pulse"></span>
+          <span id="statusText" data-i18n="ready">جاهز</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ SEARCH BAR ══════════ -->
+    <div class="search-wrap">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input
+          type="search"
+          id="searchInput"
+          class="search-input"
+          placeholder="ابحث عن أي خبر أو دولة..."
+          autocomplete="off"
+          enterkeyhint="search"
+        />
+        <button class="search-clear hidden" id="searchClear" aria-label="مسح">✕</button>
+      </div>
+
+      <!-- وسوم بحث سريع -->
+      <div class="quick-tags" id="quickTags" role="list"></div>
+    </div>
+  </header>
+
+  <!-- ══════════ FILTER BAR ══════════ -->
+  <section class="filter-bar">
+    <button class="filter-btn active" data-filter="all"        data-i18n="filterAll">الكل</button>
+    <button class="filter-btn"        data-filter="verified"   data-i18n="filterVerified">✅ موثقة</button>
+    <button class="filter-btn"        data-filter="unverified" data-i18n="filterUnverified">⚠️ غير مؤكدة</button>
+  </section>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <main class="main-content" id="mainContent">
+
+    <!-- ترحيب -->
+    <div class="welcome-state" id="welcomeState">
+      <div class="welcome-icon">📰</div>
+      <h2 data-i18n="welcomeTitle">ابحث عن أي خبر</h2>
+      <p data-i18n="welcomeDesc">اكتب كلمة في خانة البحث أو اختر من الاقتراحات أدناه</p>
+    </div>
+
+    <!-- تحميل -->
+    <div class="loading-state hidden" id="loadingState">
+      <div class="spinner"></div>
+      <p data-i18n="loading">جاري جلب الأخبار...</p>
+    </div>
+
+    <!-- خطأ -->
+    <div class="error-state hidden" id="errorState" role="alert">
+      <span class="error-icon">📡</span>
+      <p id="errorMessage"></p>
+      <button class="retry-btn" id="retryBtn" data-i18n="retry">إعادة المحاولة</button>
+    </div>
+
+    <!-- شبكة الأخبار -->
+    <div class="news-grid hidden" id="newsGrid"></div>
+
+  </main>
+
+  <!-- ══════════ MODAL ══════════ -->
+  <div class="modal-overlay hidden" id="modalOverlay" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <button class="modal-close" id="modalClose" aria-label="إغلاق">✕</button>
+      <div class="modal-badge" id="modalBadge"></div>
+      <img class="modal-img" id="modalImg" src="" alt="" loading="lazy" />
+      <div class="modal-body">
+        <span class="modal-query-tag" id="modalQueryTag"></span>
+        <h2 class="modal-title" id="modalTitle"></h2>
+
+        <!-- زر الترجمة -->
+        <button class="translate-btn hidden" id="translateBtn">
+          🌐 <span data-i18n="translateBtn">ترجم هذا الخبر</span>
+        </button>
+
+        <p class="modal-desc" id="modalDesc"></p>
+
+        <!-- صندوق الترجمة -->
+        <div class="translation-box hidden" id="translationBox">
+          <div class="translation-header">
+            <span data-i18n="translatedText">الترجمة</span>
+            <span class="trans-loading hidden" id="transLoading">⏳</span>
+          </div>
+          <p id="translatedDesc"></p>
+        </div>
+
+        <div class="modal-meta">
+          <span id="modalDate"></span>
+          <a class="modal-link" id="modalLink" href="#" target="_blank" rel="noopener" data-i18n="readSource">قراءة المصدر ↗</a>
+        </div>
+
+        <div class="credibility-bar">
+          <span class="cred-label" data-i18n="credLabel">مستوى المصداقية</span>
+          <div class="cred-track"><div class="cred-fill" id="credFill"></div></div>
+          <span class="cred-value" id="credValue"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ FOOTER ══════════ -->
+  <footer class="footer">
+    <p data-i18n="footer">كاشف الحقيقة © 2025 — بيانات من NewsAPI</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
+/*
+  ══════════════════════════════════════════════════════════
+  🎨 style.css — كاشف الحقيقة v3
+  الجديد: search bar، lang menu، translation box، welcome state
+  ══════════════════════════════════════════════════════════
+*/
+
+/* ━━━━━━━━━━━━━━━━━━ VARIABLES ━━━━━━━━━━━━━━━━━━ */
+:root {
+  --bg-primary:    #0f1923;
+  --bg-card:       #1a2535;
+  --bg-card-hover: #1f2d42;
+  --bg-glass:      rgba(255,255,255,0.05);
+  --accent:        #00d4aa;
+  --accent-dim:    rgba(0,212,170,0.15);
+  --verified:      #00d4aa;
+  --unverified:    #ff9f43;
+  --official-clr:  #64a0ff;
+  --text-primary:  #e8edf2;
+  --text-secondary:#8899aa;
+  --text-muted:    #4a5568;
+  --border:        rgba(255,255,255,0.08);
+  --shadow-card:   0 4px 20px rgba(0,0,0,0.4);
+  --shadow-hover:  0 8px 32px rgba(0,0,0,0.6);
+  --transition:    0.22s ease;
+
+  /* الخط يتغير مع اللغة عبر JS */
+  --font-ar: 'Cairo', sans-serif;
+  --font-en: 'Inter', sans-serif;
+  --font-fr: 'Readex Pro', sans-serif;
+  --font:    var(--font-ar);
+}
+
+/* ━━━━━━━━━━━━━━━━━━ RESET ━━━━━━━━━━━━━━━━━━ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ━━━━━━━━━━━━━━━━━━ BODY ━━━━━━━━━━━━━━━━━━ */
+body {
+  font-family: var(--font);
+  background:  var(--bg-primary);
+  color:       var(--text-primary);
+  min-height:  100vh;
+  direction:   rtl;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0);
+  background-size: 24px 24px;
+  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
+}
+
+/* LTR عند اختيار الإنجليزية أو الفرنسية */
+body[dir="ltr"] { direction: ltr; text-align: left; }
+body[dir="rtl"] { direction: rtl; text-align: right; }
+
+/* تغيير الخط حسب اللغة */
+body[data-lang="ar"] { --font: var(--font-ar); }
+body[data-lang="en"] { --font: var(--font-en); }
+body[data-lang="fr"] { --font: var(--font-fr); }
+
+/* ━━━━━━━━━━━━━━━━━━ HEADER ━━━━━━━━━━━━━━━━━━ */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(15,25,35,0.93);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 0;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* شعار */
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { font-size: 24px; animation: logoSpin .5s ease-out; }
+@keyframes logoSpin {
+  from { transform: rotate(-20deg) scale(.8); opacity: 0; }
+  to   { transform: rotate(0) scale(1); opacity: 1; }
+}
+.logo-text h1 { font-size: 15px; font-weight: 900; color: var(--accent); line-height: 1.1; }
+.logo-text span { font-size: 9px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; }
+
+/* أدوات الهيدر */
+.header-tools { display: flex; align-items: center; gap: 10px; }
+
+/* ━━━━━━━━━━━━━━━━━━ LANGUAGE MENU ━━━━━━━━━━━━━━━━━━ */
+.lang-wrap { position: relative; }
+
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 10px;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.lang-toggle:hover { background: var(--bg-card); color: var(--text-primary); }
+.chevron { font-size: 10px; transition: transform var(--transition); }
+.lang-toggle[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+
+.lang-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  /* RTL: ينزل من اليمين — LTR: من اليسار */
+  right: 0;
+  left: auto;
+  background: #1e2d3f;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 140px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 200;
+  animation: dropIn .18s ease;
+}
+body[dir="ltr"] .lang-dropdown { right: auto; left: 0; }
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.lang-option {
+  width: 100%;
+  text-align: right;
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+body[dir="ltr"] .lang-option { text-align: left; }
+.lang-option:hover  { background: var(--bg-glass); color: var(--text-primary); }
+.lang-option.active { color: var(--accent); font-weight: 700; }
+
+/* شارة الحالة */
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 9px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.pulse {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 1.8s infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:.4; transform:scale(.7); }
+}
+
+/* ━━━━━━━━━━━━━━━━━━ SEARCH BAR ━━━━━━━━━━━━━━━━━━ */
+.search-wrap {
+  max-width: 860px;
+  margin: 10px auto 0;
+  padding: 0 14px;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 14px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.search-bar:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.search-icon { font-size: 16px; flex-shrink: 0; color: var(--text-muted); }
+
+.search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 14px;
+  direction: inherit;
+}
+.search-input::placeholder { color: var(--text-muted); }
+/* إخفاء زر X الافتراضي للمتصفح */
+.search-input::-webkit-search-cancel-button { display: none; }
+
+.search-clear {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  border-radius: 50%;
+  width: 22px; height: 22px;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+.search-clear:hover { background: rgba(255,255,255,0.15); }
+
+/* الوسوم السريعة */
+.quick-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+  padding-bottom: 4px;
+}
+
+.quick-tag {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.quick-tag:hover,
+.quick-tag.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0f1923;
+}
+
+/* ━━━━━━━━━━━━━━━━━━ FILTER BAR ━━━━━━━━━━━━━━━━━━ */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  max-width: 900px;
+  margin: 0 auto;
+}
+.filter-btn {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 4px;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.filter-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ━━━━━━━━━━━━━━━━━━ WELCOME STATE ━━━━━━━━━━━━━━━━━━ */
+.welcome-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 60px 20px;
+  gap: 12px;
+}
+.welcome-icon { font-size: 52px; animation: float 3s ease-in-out infinite; }
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+.welcome-state h2 { font-size: 18px; font-weight: 800; color: var(--text-primary); }
+.welcome-state p  { font-size: 13px; color: var(--text-secondary); max-width: 260px; line-height: 1.6; }
+
+/* ━━━━━━━━━━━━━━━━━━ MAIN & GRID ━━━━━━━━━━━━━━━━━━ */
+.main-content {
+  padding: 14px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+/* ━━━━━━━━━━━━━━━━━━ NEWS CARD ━━━━━━━━━━━━━━━━━━ */
+.news-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition);
+  animation: cardIn 0.35s ease-out both;
+}
+.news-card:nth-child(1){animation-delay:.00s}
+.news-card:nth-child(2){animation-delay:.05s}
+.news-card:nth-child(3){animation-delay:.10s}
+.news-card:nth-child(4){animation-delay:.15s}
+.news-card:nth-child(5){animation-delay:.20s}
+.news-card:nth-child(6){animation-delay:.25s}
+@keyframes cardIn {
+  from { opacity:0; transform:translateY(18px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.news-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(255,255,255,0.13);
+}
+
+.card-img-wrap {
+  position: relative;
+  width: 100%;
+  height: 170px;
+  overflow: hidden;
+  background: #0a1520;
+}
+.card-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .4s ease;
+}
+.news-card:hover .card-img { transform: scale(1.05); }
+
+/* شارات البطاقة */
+.card-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+body[dir="ltr"] .card-badge { right: auto; left: 10px; }
+
+.card-badge.verified   { background:rgba(0,212,170,.2);  border:1px solid var(--verified);   color:var(--verified);   }
+.card-badge.unverified { background:rgba(255,159,67,.2); border:1px solid var(--unverified); color:var(--unverified); }
+.card-badge.official   { background:rgba(100,160,255,.18); border:1px solid var(--official-clr); color:var(--official-clr); top:40px; }
+
+/* جسم البطاقة */
+.card-body  { padding: 12px; }
+.card-meta  { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.card-query { font-size:11px; color:var(--accent); font-weight:700; }
+.card-date  { font-size:10px; color:var(--text-muted); }
+.card-title {
+  font-size: 13px; font-weight: 700; line-height: 1.5;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-footer {
+  display: flex; align-items:center; justify-content:space-between;
+  margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);
+}
+.card-source { font-size:11px; color:var(--text-muted); }
+.card-arrow  { color:var(--accent); font-size:13px; transition:transform var(--transition); }
+.news-card:hover .card-arrow { transform: translateX(-4px); }
+body[dir="ltr"] .news-card:hover .card-arrow { transform: translateX(4px); }
+
+/* ━━━━━━━━━━━━━━━━━━ LOADING / ERROR ━━━━━━━━━━━━━━━━━━ */
+.loading-state {
+  display: flex; flex-direction:column; align-items:center;
+  gap: 14px; padding: 60px 20px; color: var(--text-secondary);
+}
+.spinner {
+  width:38px; height:38px;
+  border:3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius:50%;
+  animation: spin .75s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.error-state {
+  display: flex; flex-direction:column; align-items:center;
+  gap: 10px; padding: 60px 20px; text-align:center;
+}
+.error-icon { font-size:38px; }
+.retry-btn {
+  background: var(--accent); color:#0f1923;
+  border:none; border-radius:10px; padding:9px 22px;
+  font-family:var(--font); font-size:13px; font-weight:700;
+  cursor:pointer; margin-top:6px; transition:opacity var(--transition);
+}
+.retry-btn:hover { opacity:.85; }
+
+/* ━━━━━━━━━━━━━━━━━━ MODAL ━━━━━━━━━━━━━━━━━━ */
+.modal-overlay {
+  position: fixed; inset:0;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex; align-items:flex-end;
+  animation: overlayIn .2s ease;
+}
+@keyframes overlayIn { from{opacity:0} to{opacity:1} }
+
+.modal-card {
+  background: var(--bg-card);
+  border-radius: 20px 20px 0 0;
+  width: 100%; max-height: 92vh;
+  overflow-y: auto;
+  position: relative;
+  animation: slideUp .3s cubic-bezier(.34,1.56,.64,1);
+  border-top: 1px solid var(--border);
+}
+@keyframes slideUp {
+  from{transform:translateY(100%)} to{transform:translateY(0)}
+}
+
+.modal-close {
+  position: absolute; top:12px; left:12px;
+  background:rgba(255,255,255,.1); border:none; border-radius:50%;
+  width:30px; height:30px; color:var(--text-primary);
+  font-size:13px; cursor:pointer; z-index:10;
+  display:flex; align-items:center; justify-content:center;
+  transition:background var(--transition);
+}
+body[dir="ltr"] .modal-close { left:auto; right:12px; }
+.modal-close:hover { background:rgba(255,255,255,.2); }
+
+.modal-badge {
+  position:absolute; top:12px; right:12px;
+  border-radius:20px; padding:4px 11px;
+  font-size:11px; font-weight:700;
+}
+body[dir="ltr"] .modal-badge { right:auto; left:12px; }
+.modal-badge.verified   { background:rgba(0,212,170,.2);  border:1px solid var(--verified);   color:var(--verified);   }
+.modal-badge.unverified { background:rgba(255,159,67,.2); border:1px solid var(--unverified); color:var(--unverified); }
+
+.modal-img { width:100%; height:210px; object-fit:cover; display:block; }
+.modal-body { padding:16px 16px 28px; }
+
+.modal-query-tag {
+  display:inline-block; font-size:11px; color:var(--accent);
+  font-weight:700; margin-bottom:6px; letter-spacing:.5px;
+}
+.modal-title {
+  font-size:16px; font-weight:800; line-height:1.6;
+  color:var(--text-primary); margin-bottom:10px;
+}
+
+/* زر الترجمة */
+.translate-btn {
+  display: flex; align-items:center; gap:6px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius:10px; padding:7px 14px;
+  color: var(--accent); font-family:var(--font);
+  font-size:12px; font-weight:700; cursor:pointer;
+  margin-bottom:10px; transition:all var(--transition);
+}
+.translate-btn:hover { background:var(--accent); color:#0f1923; }
+
+.modal-desc {
+  font-size:13px; line-height:1.75;
+  color:var(--text-secondary); margin-bottom:12px;
+}
+
+/* صندوق الترجمة */
+.translation-box {
+  background: rgba(0,212,170,.06);
+  border: 1px solid rgba(0,212,170,.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.translation-header {
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:11px; color:var(--accent); font-weight:700;
+  margin-bottom:8px;
+}
+.trans-loading { font-size:14px; animation:pulse 1s infinite; }
+#translatedDesc { font-size:13px; line-height:1.75; color:var(--text-secondary); }
+
+.modal-meta {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px; font-size:11px; color:var(--text-muted);
+}
+.modal-link { color:var(--accent); text-decoration:none; font-weight:600; }
+
+/* مقياس المصداقية */
+.credibility-bar {
+  background:var(--bg-glass); border:1px solid var(--border);
+  border-radius:12px; padding:11px 13px;
+}
+.cred-label  { font-size:11px; color:var(--text-muted); display:block; margin-bottom:7px; }
+.cred-track  { height:5px; background:rgba(255,255,255,.08); border-radius:6px; overflow:hidden; margin-bottom:5px; }
+.cred-fill   { height:100%; border-radius:6px; background:linear-gradient(90deg,var(--unverified),var(--verified)); transition:width .6s cubic-bezier(.34,1.56,.64,1); }
+.cred-value  { font-size:12px; font-weight:700; color:var(--text-primary); }
+
+/* ━━━━━━━━━━━━━━━━━━ FOOTER ━━━━━━━━━━━━━━━━━━ */
+.footer {
+  text-align:center; padding:18px;
+  font-size:11px; color:var(--text-muted);
+  border-top:1px solid var(--border); margin-top:16px;
+}
+
+/* ━━━━━━━━━━━━━━━━━━ UTILITIES ━━━━━━━━━━━━━━━━━━ */
+.hidden { display:none !important; }
+
+/* ━━━━━━━━━━━━━━━━━━ RESPONSIVE ━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 380px) {
+  .news-grid { grid-template-columns:1fr; }
+  .logo-text h1 { font-size:13px; }
+  .search-input { font-size:13px; }
+}
+@media (min-width: 600px) {
+  .modal-card   { max-width:500px; margin:auto; border-radius:20px; }
+  .modal-overlay { align-items:center; }
+}
+
+/*
+  ══════════════════════════════════════════════════════════════
+  ⚙️  script.js — كاشف الحقيقة v3
+  ══════════════════════════════════════════════════════════════
+
+  📦 هيكل الملف:
+     1. CONFIG        — الإعدادات العامة
+     2. I18N          — نظام الترجمة (عربي / English / Français)
+     3. QUICK_TAGS    — اقتراحات البحث السريع لكل لغة
+     4. CREDIBILITY   — خوارزمية تقييم المصداقية
+     5. API           — جلب الأخبار (everything?q=)
+     6. TRANSLATE     — ترجمة النص عبر MyMemory (مجاني)
+     7. RENDER        — عرض الواجهة
+     8. LANGUAGE      — تطبيق اللغة على الصفحة
+     9. EVENTS        — مستمعو الأحداث
+    10. INIT          — نقطة البداية
+*/
+
+'use strict';
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   1. CONFIG
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const CONFIG = {
+  /*
+    🔑 مفتاح NewsAPI — لا تغيّره
+    ⚠️ يعمل فقط من localhost (Live Server في Acode)
+  */
+  API_KEY:        '3e5e98156374427d97e1f60a51f47629',
+  BASE_URL:       'https://newsapi.org/v2',
+  PAGE_SIZE:      12,
+  CACHE_DURATION: 5 * 60 * 1000,   /* 5 دقائق */
+  SEARCH_DELAY:   600,              /* ms قبل الإرسال — يمنع طلبات زائدة */
+  FALLBACK_IMG:   'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&q=70',
+};
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   2. I18N — قاموس الترجمات
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   كل مفتاح (key) يُستخدم في HTML كـ data-i18n="key"
+   عند تغيير اللغة تُبحث كل العناصر وتُبدَّل نصوصها
+*/
+const I18N = {
+  ar: {
+    appName:         'كاشف الحقيقة',
+    ready:           'جاهز',
+    loading:         'جاري جلب الأخبار...',
+    retry:           'إعادة المحاولة',
+    filterAll:       'الكل',
+    filterVerified:  '✅ موثقة',
+    filterUnverified:'⚠️ غير مؤكدة',
+    welcomeTitle:    'ابحث عن أي خبر',
+    welcomeDesc:     'اكتب كلمة في خانة البحث أو اختر من الاقتراحات',
+    searchPlaceholder:'ابحث عن أي خبر أو دولة...',
+    readSource:      'قراءة المصدر ↗',
+    credLabel:       'مستوى المصداقية',
+    translateBtn:    'ترجم هذا الخبر',
+    translatedText:  'الترجمة',
+    translating:     'جاري الترجمة...',
+    noResults:       'لا توجد نتائج لهذا البحث',
+    noFilter:        'لا توجد أخبار تطابق هذا الفلتر',
+    footer:          'كاشف الحقيقة © 2025 — بيانات من NewsAPI',
+    verified:        '✅ موثق',
+    unverified:      '⚠️ غير مؤكد',
+    official:        '🏛️ رسمي',
+    sourceUnknown:   'مصدر غير معروف',
+    noDesc:          'لا يوجد وصف لهذا الخبر.',
+    langFlag:        '🇩🇿',
+    langName:        'العربية',
+    agoMin:          'منذ {n} دقيقة',
+    agoHr:           'منذ {n} ساعة',
+    agoDays:         'منذ {n} يوم',
+    errGeneric:      'حدث خطأ. حاول مرة أخرى.',
+    errOffline:      '📡 لا يوجد اتصال بالإنترنت',
+    errKey:          '🔑 مفتاح API غير صالح',
+    errLocalhost:    '⚠️ NewsAPI تعمل فقط من localhost — استخدم Live Server',
+    errRate:         '⏳ تجاوزت حد الطلبات — انتظر دقيقة',
+    newsCount:       '{n} خبر',
+  },
+  en: {
+    appName:         'News Verify',
+    ready:           'Ready',
+    loading:         'Fetching news...',
+    retry:           'Try Again',
+    filterAll:       'All',
+    filterVerified:  '✅ Verified',
+    filterUnverified:'⚠️ Uncertain',
+    welcomeTitle:    'Search Any Topic',
+    welcomeDesc:     'Type a keyword or country in the search bar, or pick a suggestion',
+    searchPlaceholder:'Search news, topics, countries...',
+    readSource:      'Read Source ↗',
+    credLabel:       'Credibility Score',
+    translateBtn:    'Translate this article',
+    translatedText:  'Translation',
+    translating:     'Translating...',
+    noResults:       'No results found for this search',
+    noFilter:        'No articles match this filter',
+    footer:          'News Verify © 2025 — Powered by NewsAPI',
+    verified:        '✅ Verified',
+    unverified:      '⚠️ Uncertain',
+    official:        '🏛️ Official',
+    sourceUnknown:   'Unknown source',
+    noDesc:          'No description available.',
+    langFlag:        '🇬🇧',
+    langName:        'English',
+    agoMin:          '{n}m ago',
+    agoHr:           '{n}h ago',
+    agoDays:         '{n}d ago',
+    errGeneric:      'An error occurred. Please try again.',
+    errOffline:      '📡 No internet connection',
+    errKey:          '🔑 Invalid API key',
+    errLocalhost:    '⚠️ NewsAPI only works from localhost — use Live Server',
+    errRate:         '⏳ Rate limit exceeded — wait a minute',
+    newsCount:       '{n} articles',
+  },
+  fr: {
+    appName:         'Vérificateur d\'Infos',
+    ready:           'Prêt',
+    loading:         'Chargement des actualités...',
+    retry:           'Réessayer',
+    filterAll:       'Tout',
+    filterVerified:  '✅ Vérifié',
+    filterUnverified:'⚠️ Incertain',
+    welcomeTitle:    'Recherchez n\'importe quelle actualité',
+    welcomeDesc:     'Tapez un mot dans la barre de recherche ou choisissez une suggestion',
+    searchPlaceholder:'Rechercher des actualités, pays...',
+    readSource:      'Lire la source ↗',
+    credLabel:       'Score de crédibilité',
+    translateBtn:    'Traduire cet article',
+    translatedText:  'Traduction',
+    translating:     'Traduction en cours...',
+    noResults:       'Aucun résultat pour cette recherche',
+    noFilter:        'Aucun article ne correspond à ce filtre',
+    footer:          'News Verify © 2025 — Données via NewsAPI',
+    verified:        '✅ Vérifié',
+    unverified:      '⚠️ Incertain',
+    official:        '🏛️ Officiel',
+    sourceUnknown:   'Source inconnue',
+    noDesc:          'Aucune description disponible.',
+    langFlag:        '🇫🇷',
+    langName:        'Français',
+    agoMin:          'il y a {n} min',
+    agoHr:           'il y a {n}h',
+    agoDays:         'il y a {n}j',
+    errGeneric:      'Une erreur est survenue. Réessayez.',
+    errOffline:      '📡 Pas de connexion internet',
+    errKey:          '🔑 Clé API invalide',
+    errLocalhost:    '⚠️ NewsAPI fonctionne seulement en localhost',
+    errRate:         '⏳ Limite de requêtes dépassée',
+    newsCount:       '{n} articles',
+  },
+};
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   3. QUICK_TAGS — اقتراحات البحث لكل لغة
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   query: ما يُرسَل لـ NewsAPI
+   label: ما يظهر على الزر
+*/
+const QUICK_TAGS = {
+  ar: [
+    { label: '🌍 العالم',       query: 'world news' },
+    { label: '🇩🇿 الجزائر',    query: 'Algeria OR Algerian' },
+    { label: '🇵🇸 فلسطين',     query: 'Palestine OR Gaza' },
+    { label: '🇪🇬 مصر',        query: 'Egypt OR Cairo' },
+    { label: '🇸🇦 السعودية',   query: 'Saudi Arabia' },
+    { label: '🇲🇦 المغرب',     query: 'Morocco OR Maroc' },
+    { label: '💻 تكنولوجيا',   query: 'technology OR AI' },
+    { label: '⚽ رياضة',       query: 'sports OR football' },
+  ],
+  en: [
+    { label: '🌍 World',        query: 'world news' },
+    { label: '🇺🇸 USA',        query: 'United States' },
+    { label: '🇬🇧 UK',         query: 'United Kingdom OR Britain' },
+    { label: '🇵🇸 Palestine',  query: 'Palestine OR Gaza' },
+    { label: '💻 Technology',  query: 'technology OR AI' },
+    { label: '📈 Economy',     query: 'economy OR markets' },
+    { label: '🔬 Science',     query: 'science OR research' },
+    { label: '⚽ Sports',      query: 'sports OR football' },
+  ],
+  fr: [
+    { label: '🌍 Monde',        query: 'world news' },
+    { label: '🇫🇷 France',     query: 'France OR Paris' },
+    { label: '🇩🇿 Algérie',    query: 'Algérie OR Algeria' },
+    { label: '🇵🇸 Palestine',  query: 'Palestine OR Gaza' },
+    { label: '💻 Technologie', query: 'technologie OR IA' },
+    { label: '📈 Économie',    query: 'économie OR marché' },
+    { label: '🏛️ Politique',   query: 'politique OR gouvernement' },
+    { label: '⚽ Sport',       query: 'sport OR football' },
+  ],
+};
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   4. CREDIBILITY — تقييم المصداقية
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const TRUSTED_SOURCES = [
+  /* جزائرية */ 'aps','ennahar','echorouk','elkhabar','elmoudjahid','tsa','liberte',
+  /* دولية */   'reuters','apnews','afp','bbc','bloomberg','associated press',
+  /* عربية */   'aljazeera','france24','dw','guardian','nytimes','washingtonpost','cnn',
+];
+
+const OFFICIAL_SOURCES = ['aps','entv','radioalgerie','elmoudjahid'];
+
+/**
+ * تحليل مصداقية خبر — تعيد score (0–100) + label + status
+ * @param {Object} a — كائن الخبر من NewsAPI
+ */
+function analyzeCredibility(a) {
+  let score = 0;
+  if (a.urlToImage && !a.urlToImage.includes('placeholder')) score += 30;
+  if (a.description && a.description.length > 80)            score += 25;
+  const src = ((a.source?.name || '') + (a.source?.id || '')).toLowerCase();
+  if (TRUSTED_SOURCES.some((s) => src.includes(s)))          score += 20;
+  if (a.content && !a.content.includes('[+'))                score += 15;
+  if (a.publishedAt && (Date.now() - new Date(a.publishedAt)) / 36e5 < 72) score += 10;
+
+  const t      = I18N[state.lang];
+  const status = score >= 60 ? 'verified' : 'unverified';
+  const label  = score >= 60 ? t.verified : t.unverified;
+  return { score, label, status };
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   5. API — جلب الأخبار
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const cache = {};
+
+/** تنظيف الصورة */
+function optimizeImg(url) {
+  if (!url) return CONFIG.FALLBACK_IMG;
+  if (url.includes('unsplash.com')) return url.split('?')[0] + '?w=400&q=70&auto=format';
+  if (url.match(/\.(jpg|jpeg)/i))   return url.replace(/-\d{3,4}x\d{3,4}(?=\.(jpg|jpeg))/i, '-400x300');
+  return url;
+}
+
+/** تنظيف المقالات */
+function clean(articles) {
+  return (articles || []).filter((a) => a.title && a.title !== '[Removed]');
+}
+
+/**
+ * جلب الأخبار باستخدام everything?q=
+ *
+ * هذه هي الدالة الوحيدة لجلب الأخبار الآن —
+ * تعمل مع أي كلمة بحث لأي دولة أو موضوع.
+ *
+ * @param {string} query — نص البحث
+ * @returns {Promise<Array>}
+ */
+async function fetchByQuery(query) {
+  /* فحص الـ Cache */
+  const key    = query.toLowerCase().trim();
+  const cached = cache[key];
+  if (cached && Date.now() - cached.ts < CONFIG.CACHE_DURATION) {
+    console.log(`[Cache ✓] "${key}" — ${cached.data.length} نتيجة`);
+    return cached.data;
+  }
+
+  const params = new URLSearchParams({
+    q:        query,
+    sortBy:   'publishedAt',
+    pageSize: CONFIG.PAGE_SIZE,
+    apiKey:   CONFIG.API_KEY,
+  });
+
+  const url = `${CONFIG.BASE_URL}/everything?${params}`;
+  console.log(`[API] everything?q=${query}`);
+
+  const res  = await fetch(url);
+
+  /*
+    ⚠️ لا نرمي خطأ مباشرةً حتى نعطي رسائل واضحة
+    نفحص الكود ونرمي رسالة مخصصة
+  */
+  if (!res.ok) throw new Error(String(res.status));
+
+  const data = await res.json();
+  if (data.status !== 'ok') throw new Error(data.message || 'API error');
+
+  const articles = clean(data.articles);
+  cache[key] = { data: articles, ts: Date.now() };
+  return articles;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   6. TRANSLATE — ترجمة بسيطة مجانية
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   نستخدم MyMemory API — مجاني بدون تسجيل
+   حد مجاني: 5000 حرف/يوم
+   الرابط: https://mymemory.translated.net/api/get
+*/
+
+/*
+  خريطة رموز اللغات لـ MyMemory:
+  ar = عربي | en = إنجليزي | fr = فرنسي
+*/
+const LANG_CODES = { ar: 'ar', en: 'en', fr: 'fr' };
+
+/**
+ * يترجم نصاً إلى اللغة المختارة
+ * @param {string} text     — النص الأصلي
+ * @param {string} targetLang — رمز اللغة الهدف (ar/en/fr)
+ * @returns {Promise<string>} النص المترجم
+ */
+async function translateText(text, targetLang) {
+  if (!text || text.trim() === '') return '';
+
+  /*
+    MyMemory يحتاج أن نحدد لغة المصدر.
+    معظم أخبار NewsAPI بالإنجليزية → المصدر دائماً 'en'
+    إلا إذا كانت اللغة المختارة 'en' → لا حاجة للترجمة
+  */
+  if (targetLang === 'en') return text; /* الأخبار أصلاً بالإنجليزية */
+
+  const sourceLang = 'en';
+  const langPair   = `${sourceLang}|${LANG_CODES[targetLang]}`;
+
+  const params = new URLSearchParams({
+    q:        text.slice(0, 500), /* MyMemory: حد 500 حرف للطلب المجاني */
+    langpair: langPair,
+  });
+
+  const res  = await fetch(`https://api.mymemory.translated.net/get?${params}`);
+  const data = await res.json();
+
+  /*
+    البنية: data.responseData.translatedText
+    200 = نجاح | 403 = تجاوز الحد اليومي
+  */
+  if (data.responseStatus === 200) {
+    return data.responseData.translatedText || text;
+  }
+
+  throw new Error(`Translation failed: ${data.responseStatus}`);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   7. STATE — الحالة العامة
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const state = {
+  lang:          'ar',        /* اللغة الحالية */
+  currentQuery:  '',          /* آخر نص بحث */
+  currentFilter: 'all',       /* all / verified / unverified */
+  articles:      [],          /* الأخبار الحالية */
+  openArticle:   null,        /* الخبر المفتوح في Modal */
+  searchTimer:   null,        /* مؤقت Debounce */
+  activeTag:     null,        /* الوسم النشط */
+};
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   8. DOM — مراجع العناصر
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const $ = (id) => document.getElementById(id);
+const DOM = {
+  searchInput:    $('searchInput'),
+  searchClear:    $('searchClear'),
+  quickTags:      $('quickTags'),
+  newsGrid:       $('newsGrid'),
+  loadingState:   $('loadingState'),
+  errorState:     $('errorState'),
+  errorMessage:   $('errorMessage'),
+  retryBtn:       $('retryBtn'),
+  welcomeState:   $('welcomeState'),
+  statusText:     $('statusText'),
+  filterBtns:     document.querySelectorAll('.filter-btn'),
+  /* Modal */
+  modalOverlay:   $('modalOverlay'),
+  modalBadge:     $('modalBadge'),
+  modalImg:       $('modalImg'),
+  modalQueryTag:  $('modalQueryTag'),
+  modalTitle:     $('modalTitle'),
+  modalDesc:      $('modalDesc'),
+  translateBtn:   $('translateBtn'),
+  translationBox: $('translationBox'),
+  transLoading:   $('transLoading'),
+  translatedDesc: $('translatedDesc'),
+  modalDate:      $('modalDate'),
+  modalLink:      $('modalLink'),
+  credFill:       $('credFill'),
+  credValue:      $('credValue'),
+  modalClose:     $('modalClose'),
+  /* Lang */
+  langToggle:     $('langToggle'),
+  langDropdown:   $('langDropdown'),
+  currentLangFlag:$('currentLangFlag'),
+  currentLangName:$('currentLangName'),
+};
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   9. LANGUAGE — تطبيق اللغة
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/**
+ * يطبّق اللغة على كامل الصفحة
+ * @param {string} lang — 'ar' | 'en' | 'fr'
+ */
+function applyLanguage(lang) {
+  state.lang = lang;
+  const t    = I18N[lang];
+
+  /* 1. اتجاه الصفحة */
+  const isRTL = lang === 'ar';
+  document.documentElement.lang     = lang;
+  document.documentElement.dir      = isRTL ? 'rtl' : 'ltr';
+  document.body.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+  document.body.setAttribute('data-lang', lang);
+
+  /* 2. ترجمة كل العناصر data-i18n */
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.dataset.i18n;
+    if (t[key] !== undefined) el.textContent = t[key];
+  });
+
+  /* 3. placeholder خانة البحث */
+  DOM.searchInput.placeholder = t.searchPlaceholder;
+
+  /* 4. تحديث زر اللغة */
+  DOM.currentLangFlag.textContent = t.langFlag;
+  DOM.currentLangName.textContent = t.langName;
+
+  /* 5. تحديث حالة أزرار اللغة */
+  document.querySelectorAll('.lang-option').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+
+  /* 6. إعادة رسم الوسوم السريعة */
+  renderQuickTags();
+
+  /* 7. إعادة رسم الأخبار الموجودة بالنصوص الجديدة */
+  if (state.articles.length > 0) renderNews();
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   10. RENDER — عرض الواجهة
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/** رسم الوسوم السريعة */
+function renderQuickTags() {
+  const tags = QUICK_TAGS[state.lang] || QUICK_TAGS.ar;
+  DOM.quickTags.innerHTML = tags.map((tag) => `
+    <button
+      class="quick-tag ${tag.query === state.activeTag ? 'active' : ''}"
+      data-query="${tag.query}"
+      role="listitem"
+    >${tag.label}</button>
+  `).join('');
+}
+
+/** تنسيق التاريخ */
+function formatDate(str) {
+  if (!str) return '';
+  const t       = I18N[state.lang];
+  const diff    = Date.now() - new Date(str);
+  const mins    = Math.floor(diff / 60000);
+  const hrs     = Math.floor(mins / 60);
+  const days    = Math.floor(hrs / 24);
+  if (mins < 60)  return t.agoMin.replace('{n}', mins);
+  if (hrs  < 24)  return t.agoHr.replace('{n}', hrs);
+  if (days < 7)   return t.agoDays.replace('{n}', days);
+  return new Date(str).toLocaleDateString(
+    state.lang === 'ar' ? 'ar-DZ' : state.lang === 'fr' ? 'fr-FR' : 'en-GB',
+    { day:'numeric', month:'long', year:'numeric' }
+  );
+}
+
+/** بناء HTML بطاقة خبر */
+function buildCard(article, index) {
+  const t      = I18N[state.lang];
+  const cred   = analyzeCredibility(article);
+  const imgSrc = optimizeImg(article.urlToImage);
+  const date   = formatDate(article.publishedAt);
+  const source = article.source?.name || t.sourceUnknown;
+  const src    = source.toLowerCase();
+  const isOff  = OFFICIAL_SOURCES.some((s) => src.includes(s));
+  const offBadge = isOff
+    ? `<span class="card-badge official" style="top:38px">${t.official}</span>`
+    : '';
+
+  return `
+    <article class="news-card" data-index="${index}" data-status="${cred.status}"
+      role="article" tabindex="0" aria-label="${article.title}">
+      <div class="card-img-wrap">
+        <img class="card-img" src="${imgSrc}" alt="${article.title}"
+          loading="lazy" decoding="async" width="400" height="170"
+          onerror="this.src='${CONFIG.FALLBACK_IMG}'" />
+        <span class="card-badge ${cred.status}">${cred.label}</span>
+        ${offBadge}
+      </div>
+      <div class="card-body">
+        <div class="card-meta">
+          <span class="card-query">🔍 ${state.currentQuery}</span>
+          <span class="card-date">${date}</span>
+        </div>
+        <h2 class="card-title">${article.title}</h2>
+        <div class="card-footer">
+          <span class="card-source">${source}</span>
+          <span class="card-arrow">${state.lang === 'ar' ? '←' : '→'}</span>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+/** عرض الأخبار مع تطبيق الفلتر */
+function renderNews() {
+  const t        = I18N[state.lang];
+  const filtered = state.currentFilter === 'all'
+    ? state.articles
+    : state.articles.filter((a) => analyzeCredibility(a).status === state.currentFilter);
+
+  if (filtered.length === 0) {
+    DOM.newsGrid.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">
+        ${t.noFilter}
+      </div>`;
+    return;
+  }
+
+  DOM.newsGrid.innerHTML = filtered.map((a, i) => buildCard(a, i)).join('');
+}
+
+/** تبديل حالة الواجهة */
+function showState(s) {
+  DOM.welcomeState.classList.toggle('hidden',  s !== 'welcome');
+  DOM.loadingState.classList.toggle('hidden',  s !== 'loading');
+  DOM.errorState.classList.toggle('hidden',    s !== 'error');
+  DOM.newsGrid.classList.toggle('hidden',      s !== 'results');
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   11. SEARCH — البحث الرئيسي
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/**
+ * دالة البحث الرئيسية
+ * @param {string} query — نص البحث
+ */
+async function doSearch(query) {
+  const t = I18N[state.lang];
+  query   = query.trim();
+  if (!query) { showState('welcome'); return; }
+
+  state.currentQuery = query;
+  state.articles     = [];
+  DOM.newsGrid.innerHTML = '';
+  DOM.statusText.textContent = t.loading;
+  showState('loading');
+
+  try {
+    const articles     = await fetchByQuery(query);
+    state.articles     = articles;
+    showState('results');
+    renderNews();
+    DOM.statusText.textContent = articles.length > 0
+      ? t.newsCount.replace('{n}', articles.length)
+      : t.noResults;
+  } catch (err) {
+    console.error('[doSearch]', err);
+    let msg = t.errGeneric;
+    if (!navigator.onLine)           msg = t.errOffline;
+    else if (err.message === '401')  msg = t.errKey;
+    else if (err.message === '426')  msg = t.errLocalhost;
+    else if (err.message === '429')  msg = t.errRate;
+    DOM.errorMessage.textContent = msg;
+    showState('error');
+    DOM.statusText.textContent = '⚠️';
+  }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   12. MODAL — نافذة تفاصيل الخبر
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function openM
